@@ -5,15 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Eye, ThumbsUp } from "lucide-react"
+import Image from "next/image"
 
 interface Creative {
   id: string
-  headline: string
-  description: string
-  callToAction: string
-  targetStreet: string
-  offer: string
-  framework: string
+  imageUrl: string
 }
 
 interface CreativeGenerationStepProps {
@@ -68,12 +64,7 @@ export function CreativeGenerationStep({
         
         const formattedCreatives = data.map((item: any, index: number) => ({
           id: `${new Date().getTime()}-${index}`,
-          headline: item.headline || "Generated Headline",
-          description: item.body || "Generated body text.",
-          callToAction: item.cta || "Learn More",
-          targetStreet: item.street || "Nearby",
-          offer: item.offer || "Special Offer",
-          framework: item.framework || "AIDA",
+          imageUrl: item.adCopyImgUrl,
         }));
 
         setCreatives(formattedCreatives)
@@ -145,51 +136,30 @@ export function CreativeGenerationStep({
                 Generated {creatives.length} unique ad creatives. Select the ones you'd like to use:
               </p>
 
-              <div className="grid gap-4">
+              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {creatives.map((creative) => (
                   <div
                     key={creative.id}
-                    className={`border rounded-lg p-6 transition-all cursor-pointer relative ${
+                    className={`border rounded-lg p-2 transition-all cursor-pointer relative overflow-hidden aspect-w-1 aspect-h-1 ${
                       selectedCreatives.includes(creative.id)
-                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500"
+                        ? "ring-2 ring-offset-2 ring-blue-500"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => handleCreativeToggle(creative.id)}
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="font-medium">
-                          {creative.targetStreet}
-                        </Badge>
-                        <Badge variant="secondary" className="font-normal">
-                          {creative.framework}
-                        </Badge>
+                    {creative.imageUrl ? (
+                       <Image
+                        src={creative.imageUrl}
+                        alt={`Ad Creative ${creative.id}`}
+                        layout="fill"
+                        objectFit="cover"
+                        className="rounded-md"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <span className="text-xs text-gray-500">Image not available</span>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-500">
-                        <Eye className="h-5 w-5 hover:text-gray-800" />
-                        <ThumbsUp className="h-5 w-5 hover:text-gray-800" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-xl text-gray-800">{creative.headline}</h4>
-                      <p className="text-gray-600 leading-relaxed">{creative.description}</p>
-                      <div className="flex items-end justify-between pt-2">
-                        <p className="text-sm text-gray-500">
-                          <span className="font-semibold">Offer:</span> {creative.offer}
-                        </p>
-                        <Button
-                          size="sm"
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6"
-                          onClick={(e) => {
-                            e.stopPropagation() 
-                            // Add any specific button action here, e.g., redirecting
-                          }}
-                        >
-                          {creative.callToAction}
-                        </Button>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
