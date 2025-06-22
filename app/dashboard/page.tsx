@@ -31,6 +31,8 @@ import {
   MoreVertical,
   DollarSign,
   TrendingUp,
+  Copy,
+  MapPin,
 } from "lucide-react"
 import {
   Area,
@@ -219,6 +221,54 @@ export default function DashboardPage() {
               <p className="text-muted-foreground text-center py-8">
                 Campaign data will appear here once available.
               </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Creatives Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Ad Creatives</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {wizardData?.generatedCreatives?.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {wizardData.generatedCreatives.map((creative: { street: string; headline: string; body: string; imageUrl: string }, index: number) => (
+                  <Card key={index} className="flex flex-col overflow-hidden rounded-lg">
+                    <div className="relative w-full h-48 bg-gray-100">
+                      <Image
+                        src={creative.imageUrl || "/placeholder.svg"}
+                        alt={`Ad creative for ${creative.street}`}
+                        layout="fill"
+                        objectFit="cover"
+                      />
+                    </div>
+                    <div className="p-4 flex flex-col flex-grow">
+                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                        <MapPin className="h-4 w-4" />
+                        <span>Ad for {creative.street}</span>
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2 flex-grow">{creative.headline}</h3>
+                      <p className="text-muted-foreground text-sm mb-4 flex-grow">{creative.body}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2 mt-auto"
+                        onClick={() => navigator.clipboard.writeText(`${creative.headline}\n\n${creative.body}`)}
+                      >
+                        <Copy className="h-4 w-4" />
+                        Copy Text
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                 <ImageIcon className="mx-auto h-12 w-12 mb-4" />
+                <p>Your generated ad creatives will appear here.</p>
+                <p className="text-sm">Complete the setup wizard to generate your first set of ads.</p>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -73,10 +73,41 @@ export function BusinessInfoStep({ onNext }: BusinessInfoStepProps) {
     postalCode: "",
     website: "",
     phone: "",
+    averageSaleValue: "",
+    grossMargin: "",
+    maxDiscountPercentage: "",
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const apiUrl = process.env.NEXT_PUBLIC_REPURPOSEADSWEB_API_KEY
+    if (!apiUrl) {
+      console.error(
+        "NEXT_PUBLIC_REPURPOSEADSWEB_API_KEY environment variable is not configured.",
+      )
+    } else {
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            businessName: formData.businessName,
+            businessDescription: formData.description,
+            businessType: formData.businessType,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`)
+        }
+      } catch (error) {
+        console.error("Failed to post business info:", error)
+      }
+    }
+
     const fullAddress = `${formData.streetNumber} ${formData.streetName}, ${formData.city}, ${formData.province} ${formData.postalCode}`
     onNext({ ...formData, fullAddress })
   }
@@ -225,6 +256,53 @@ export function BusinessInfoStep({ onNext }: BusinessInfoStepProps) {
                   }
                   placeholder="e.g., M5V 2T6"
                   required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium">Financial Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="averageSaleValue">Average Sale Value</Label>
+                <Input
+                  id="averageSaleValue"
+                  type="number"
+                  value={formData.averageSaleValue}
+                  onChange={(e) =>
+                    setFormData({ ...formData, averageSaleValue: e.target.value })
+                  }
+                  placeholder="$50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="grossMargin">Gross Margin (%)</Label>
+                <Input
+                  id="grossMargin"
+                  type="number"
+                  value={formData.grossMargin}
+                  onChange={(e) =>
+                    setFormData({ ...formData, grossMargin: e.target.value })
+                  }
+                  placeholder="60"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxDiscountPercentage">
+                  Max Discount (%)
+                </Label>
+                <Input
+                  id="maxDiscountPercentage"
+                  type="number"
+                  value={formData.maxDiscountPercentage}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      maxDiscountPercentage: e.target.value,
+                    })
+                  }
+                  placeholder="25"
                 />
               </div>
             </div>

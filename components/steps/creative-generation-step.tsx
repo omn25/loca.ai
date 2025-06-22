@@ -38,31 +38,56 @@ export function CreativeGenerationStep({
   useEffect(() => {
     const generateCreatives = async () => {
       setLoading(true)
-      // Simulate longer API delay for creative generation
-      await new Promise((resolve) => setTimeout(resolve, 4000))
+      const apiUrl = process.env.NEXT_PUBLIC_CREATIVE_API_KEY
+      if (!apiUrl) {
+        console.error("NEXT_PUBLIC_CREATIVE_API_KEY is not configured.")
+        setLoading(false)
+        return
+      }
 
-      // Mock creatives combining streets and offers
-      const mockCreatives: Creative[] = []
-
-      selectedStreets.slice(0, 3).forEach((street, streetIndex) => {
-        selectedOffers.forEach((offer, offerIndex) => {
-          mockCreatives.push({
-            id: `${streetIndex}-${offerIndex}`,
-            headline: `${street} Neighbors: ${offer.title}!`,
-            description: `Hey ${street} residents! ${businessData.businessName} is bringing you an exclusive ${offer.description.toLowerCase()}. Perfect for busy weeknights when you want quality food delivered right to your door.`,
-            callToAction: "Order Now",
-            targetStreet: street,
-            offer: offer.title,
-            framework: "AIDA (Attention-Interest-Desire-Action)",
-          })
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            businessName: businessData?.businessName,
+            businessType: businessData?.businessType,
+            businessAddress: businessData?.fullAddress,
+            nearbyStreets: selectedStreets,
+            custom_offers: selectedOffers,
+          }),
         })
-      })
 
-      setCreatives(mockCreatives.slice(0, 6)) // Limit to 6 creatives
-      setLoading(false)
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`)
+        }
+
+        const data = await response.json()
+        
+        const formattedCreatives = data.map((item: any, index: number) => ({
+          id: `${new Date().getTime()}-${index}`,
+          headline: item.headline || "Generated Headline",
+          description: item.body || "Generated body text.",
+          callToAction: item.cta || "Learn More",
+          targetStreet: item.street || "Nearby",
+          offer: item.offer || "Special Offer",
+          framework: item.framework || "AIDA",
+        }));
+
+        setCreatives(formattedCreatives)
+      } catch (error) {
+        console.error("Failed to generate creatives:", error)
+        // Optionally, set some error state to show in the UI
+      } finally {
+        setLoading(false)
+      }
     }
 
-    generateCreatives()
+    if (businessData && selectedStreets.length > 0 && selectedOffers.length > 0) {
+      generateCreatives()
+    }
   }, [businessData, selectedStreets, selectedOffers])
 
   const handleCreativeToggle = (creativeId: string) => {
@@ -124,42 +149,43 @@ export function CreativeGenerationStep({
                 {creatives.map((creative) => (
                   <div
                     key={creative.id}
-                    className={`border rounded-lg p-4 transition-all cursor-pointer ${
+                    className={`border rounded-lg p-6 transition-all cursor-pointer relative ${
                       selectedCreatives.includes(creative.id)
-                        ? "border-blue-500 bg-blue-50"
+                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => handleCreativeToggle(creative.id)}
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="font-medium">
                           {creative.targetStreet}
                         </Badge>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="font-normal">
                           {creative.framework}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" className="h-8 px-2">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant={selectedCreatives.includes(creative.id) ? "default" : "ghost"}
-                          size="sm"
-                          className="h-8 px-2"
-                        >
-                          <ThumbsUp className="h-4 w-4" />
-                        </Button>
+                      <div className="flex items-center gap-3 text-gray-500">
+                        <Eye className="h-5 w-5 hover:text-gray-800" />
+                        <ThumbsUp className="h-5 w-5 hover:text-gray-800" />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-lg">{creative.headline}</h4>
-                      <p className="text-gray-700 text-sm leading-relaxed">{creative.description}</p>
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-xs text-gray-500">Offer: {creative.offer}</span>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <div className="space-y-3">
+                      <h4 className="font-bold text-xl text-gray-800">{creative.headline}</h4>
+                      <p className="text-gray-600 leading-relaxed">{creative.description}</p>
+                      <div className="flex items-end justify-between pt-2">
+                        <p className="text-sm text-gray-500">
+                          <span className="font-semibold">Offer:</span> {creative.offer}
+                        </p>
+                        <Button
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6"
+                          onClick={(e) => {
+                            e.stopPropagation() 
+                            // Add any specific button action here, e.g., redirecting
+                          }}
+                        >
                           {creative.callToAction}
                         </Button>
                       </div>
@@ -169,8 +195,8 @@ export function CreativeGenerationStep({
               </div>
             </div>
 
-            <div className="bg-purple-50 p-4 rounded-lg mb-6">
-              <p className="text-sm text-purple-800">
+            <div className="bg-green-50 p-4 rounded-lg mb-6">
+              <p className="text-sm text-green-800">
                 <strong>{selectedCreatives.length}</strong> creatives selected. Each creative will be automatically A/B
                 tested to optimize performance.
               </p>
